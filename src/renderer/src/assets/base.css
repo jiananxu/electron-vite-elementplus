@@ -1,34 +1,57 @@
 :root {
-  --ev-c-white: #ffffff;
-  --ev-c-white-soft: #f8f8f8;
-  --ev-c-white-mute: #f2f2f2;
+  /* 华为风格主色调 */
+  --hw-primary: #007DFF;
+  --hw-primary-hover: #0066CC;
+  --hw-primary-active: #0052A3;
 
-  --ev-c-black: #1b1b1f;
-  --ev-c-black-soft: #222222;
-  --ev-c-black-mute: #282828;
+  /* 中性色 */
+  --hw-black: #1a1b1f;
+  --hw-black-soft: #2a2b30;
+  --hw-black-mute: #3a3b40;
 
-  --ev-c-gray-1: #515c67;
-  --ev-c-gray-2: #414853;
-  --ev-c-gray-3: #32363f;
+  --hw-white: #ffffff;
+  --hw-white-soft: #f8f8f8;
+  --hw-white-mute: #f1f2f6;
 
-  --ev-c-text-1: rgba(255, 255, 245, 0.86);
-  --ev-c-text-2: rgba(235, 235, 245, 0.6);
-  --ev-c-text-3: rgba(235, 235, 245, 0.38);
+  --hw-gray-1: #e6e7eb;
+  --hw-gray-2: #c9cdd4;
+  --hw-gray-3: #9aa1b0;
+  --hw-gray-4: #6b7280;
 
-  --ev-button-alt-border: transparent;
-  --ev-button-alt-text: var(--ev-c-text-1);
-  --ev-button-alt-bg: var(--ev-c-gray-3);
-  --ev-button-alt-hover-border: transparent;
-  --ev-button-alt-hover-text: var(--ev-c-text-1);
-  --ev-button-alt-hover-bg: var(--ev-c-gray-2);
+  /* 文本色 */
+  --hw-text-primary: #1a1b1f;
+  --hw-text-secondary: #6b7280;
+  --hw-text-disabled: #9aa1b0;
+  --hw-text-white: #ffffff;
+
+  /* 背景色 */
+  --hw-bg-primary: #ffffff;
+  --hw-bg-secondary: #f1f2f6;
+  --hw-bg-tertiary: #e6e7eb;
+
+  /* 功能色 */
+  --hw-success: #07c160;
+  --hw-warning: #ff9800;
+  --hw-error: #ee3f4d;
+  --hw-info: #007DFF;
+
+  /* 边框色 */
+  --hw-border-light: #e6e7eb;
+  --hw-border-regular: #c9cdd4;
+  --hw-border-dark: #9aa1b0;
+
+  /* 阴影 */
+  --hw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --hw-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --hw-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
 :root {
-  --color-background: var(--ev-c-black);
-  --color-background-soft: var(--ev-c-black-soft);
-  --color-background-mute: var(--ev-c-black-mute);
+  --color-background: var(--hw-bg-secondary);
+  --color-background-soft: var(--hw-bg-primary);
+  --color-background-mute: var(--hw-bg-tertiary);
 
-  --color-text: var(--ev-c-text-1);
+  --color-text: var(--hw-text-primary);
 }
 
 *,
@@ -49,7 +72,8 @@ body {
   background: var(--color-background);
   line-height: 1.6;
   font-family:
-    Inter,
+    'HarmonyOS Sans',
+    'Huawei Sans',
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',
@@ -64,4 +88,37 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* 华为风格按钮样式覆盖 */
+.el-button--primary {
+  background-color: var(--hw-primary) !important;
+  border-color: var(--hw-primary) !important;
+}
+
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background-color: var(--hw-primary-hover) !important;
+  border-color: var(--hw-primary-hover) !important;
+}
+
+.el-button--primary:active {
+  background-color: var(--hw-primary-active) !important;
+  border-color: var(--hw-primary-active) !important;
+}
+
+/* 表格样式 */
+.el-table {
+  --el-table-header-bg-color: var(--hw-bg-tertiary) !important;
+  --el-table-border-color: var(--hw-border-light) !important;
+}
+
+/* 输入框样式 */
+.el-input__inner {
+  border-radius: 4px !important;
+}
+
+/* 标签样式 */
+.el-tag {
+  border-radius: 4px !important;
 }
