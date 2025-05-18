@@ -82,7 +82,7 @@ const handleFileChange = async () => {
         ElMessage.error(`计算哈希失败: ${hashResult.error}`)
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     ElMessage.error(`发生错误: ${error.message}`)
   } finally {
     isProcessing.value = false
@@ -123,8 +123,9 @@ const handleDrop = async (e: DragEvent) => {
         ElMessage.error(`计算哈希失败: ${hashResult.error}`)
       }
     }
-  } catch (error) {
-    ElMessage.error(`处理文件时发生错误: ${error.message}`)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    ElMessage.error(`处理文件时发生错误: ${errorMessage}`)
   } finally {
     isProcessing.value = false
   }
@@ -182,9 +183,10 @@ const handleDirectorySelect = async () => {
           } else {
             ElMessage.error(`计算文件 ${filename} 哈希失败: ${hashResult.error || '未知错误'}`)
           }
-        } catch (fileError) {
+        } catch (fileError: unknown) {
           console.error('处理文件时出错:', fileError)
-          ElMessage.error(`处理文件时出错: ${fileError.message || '未知错误'}`)
+          const errorMessage = fileError instanceof Error ? fileError.message : String(fileError)
+          ElMessage.error(`处理文件时出错: ${errorMessage || '未知错误'}`)
         }
       }
     } else if (scanResult.success && (!scanResult.files || scanResult.files.length === 0)) {
@@ -192,9 +194,10 @@ const handleDirectorySelect = async () => {
     } else {
       ElMessage.error(`扫描目录失败: ${scanResult.error || '未知错误'}`)
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('选择目录时发生错误:', error)
-    ElMessage.error(`选择目录时发生错误: ${error.message || '未知错误'}`)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    ElMessage.error(`选择目录时发生错误: ${errorMessage || '未知错误'}`)
   } finally {
     isProcessing.value = false
   }
@@ -205,7 +208,7 @@ const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text)
     ElMessage.success('已复制到剪贴板')
-  } catch (err) {
+  } catch (err: unknown) {
     ElMessage.error('复制失败')
     console.error('复制失败:', err)
   }
@@ -223,7 +226,7 @@ const copyToClipboard = async (text: string) => {
       <div class="hash-types">
         <el-space wrap>
           <el-checkbox-group v-model="selectedTypes">
-            <el-checkbox-button v-for="(value, type) in hashTypes" :key="type" :label="type">
+            <el-checkbox-button v-for="(_, type) in hashTypes" :key="type" :label="type">
               {{ type }}
             </el-checkbox-button>
           </el-checkbox-group>

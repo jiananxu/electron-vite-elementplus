@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
-import { extname, join } from 'path'
+import { join } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { readdir } from 'fs/promises'
@@ -92,7 +92,7 @@ app.whenReady().then(() => {
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error
       }
     }
   })
@@ -111,7 +111,7 @@ app.whenReady().then(() => {
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error
       }
     }
   })
@@ -188,13 +188,13 @@ app.whenReady().then(() => {
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error
       }
     }
   })
 
   // 处理从拖拽文件计算哈希
-  ipcMain.handle('calculate-hash-from-file', async (event, file, algorithms) => {
+  ipcMain.handle('calculate-hash-from-file', async (_, file, algorithms) => {
     try {
       // 由于 Electron 的安全限制，我们不能直接从渲染进程访问拖拽文件的路径
       // 这里我们需要通过临时文件或其他方式处理
@@ -253,7 +253,7 @@ app.whenReady().then(() => {
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error
       }
     }
   })
