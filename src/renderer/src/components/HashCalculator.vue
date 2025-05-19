@@ -13,8 +13,8 @@ interface HashResult {
 
 const hashTypes = reactive({
   MD5: false,
-  SHA1: true,
-  SHA256: false,
+  SHA1: false,
+  SHA256: true,
   SHA512: false
 })
 
