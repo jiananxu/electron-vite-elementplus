@@ -1,11 +1,12 @@
 {
   "name": "electron-vite-elementplus",
   "version": "1.0.0",
-  "description": "An Electron application with Vue and TypeScript",
+  "description": "Make Easy",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "Barlow",
+  "homepage": "https://gitee.com/xujn/electron-vite-elementplus.git",
   "scripts": {
+    "install": "pnpm install",
     "format": "prettier --write .",
     "lint": "eslint --cache .",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
