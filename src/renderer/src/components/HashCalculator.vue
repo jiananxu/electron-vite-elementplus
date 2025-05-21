@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { CopyDocument, Upload } from '@element-plus/icons-vue'
 
@@ -163,32 +163,35 @@ const handleDirectorySelect = async () => {
 
     if (scanResult.success && scanResult.files && scanResult.files.length > 0) {
       results.value = [] // 清除之前的结果
+      // 批量处理文件
+      const batchResult = await window.api.calculateBatchHashes(
+        scanResult.files,
+        selectedAlgorithms.value
+      )
 
-      // 处理每个文件
-      for (const filePath of scanResult.files) {
-        try {
-          const pathParts = filePath.split(/[/\\]/)
-          const filename = pathParts[pathParts.length - 1]
+      if (batchResult.success && batchResult.results) {
+        // 处理每个文件的结果
+        for (const fileResult of batchResult.results) {
+          if (fileResult.success && fileResult.results) {
+            const pathParts = fileResult.filePath.split(/[/\\]/)
+            const filename = pathParts[pathParts.length - 1]
 
-          // 计算哈希
-          const hashResult = await window.api.calculateHash(filePath, selectedAlgorithms.value)
-
-          if (hashResult.success && hashResult.results) {
-            // 创建结果对象并添加到列表
             const result: HashResult = {
               filename,
-              path: filePath,
-              hash: hashResult.results
+              path: fileResult.filePath,
+              hash: fileResult.results
             }
             results.value.push(result)
           } else {
-            ElMessage.error(`计算文件 ${filename} 哈希失败: ${hashResult.error || '未知错误'}`)
+            const pathParts = fileResult.filePath.split(/[/\\]/)
+            const filename = pathParts[pathParts.length - 1]
+            ElMessage.warning(`文件 ${filename} 处理失败: ${fileResult.error || '未知错误'}`)
           }
-        } catch (fileError: unknown) {
-          console.error('处理文件时出错:', fileError)
-          const errorMessage = fileError instanceof Error ? fileError.message : String(fileError)
-          ElMessage.error(`处理文件时出错: ${errorMessage || '未知错误'}`)
         }
+
+        ElMessage.success(`成功处理 ${results.value.length} 个文件`)
+      } else {
+        ElMessage.error(`批量处理失败: ${batchResult.error || '未知错误'}`)
       }
     } else if (scanResult.success && (!scanResult.files || scanResult.files.length === 0)) {
       ElMessage.info(`在目录 ${dirPath} 中没有找到任何文件`)
@@ -252,8 +255,8 @@ const copyToClipboard = async (text: string) => {
           <div class="button-container">
             <el-button
               type="primary"
-              @click="handleDirectorySelect"
               :loading="isDirectoryProcessing"
+              @click="handleDirectorySelect"
               >选择目录计算哈希值
             </el-button>
           </div>
@@ -264,8 +267,11 @@ const copyToClipboard = async (text: string) => {
         </div>
       </div>
 
-      <div class="results-section" v-if="results.length">
-        <h3>计算结果</h3>
+      <div v-if="results.length" class="results-section" >
+        <div class="results-header">
+          <h3>计算结果</h3>
+          <span class="file-count">共 {{ results.length }} 个文件</span>
+        </div>
         <el-table :data="results" style="width: 100%">
           <el-table-column prop="filename" label="文件名" />
           <el-table-column prop="path" label="路径" />
@@ -281,8 +287,8 @@ const copyToClipboard = async (text: string) => {
                     size="small"
                     :icon="CopyDocument"
                     circle
-                    @click="copyToClipboard(value)"
                     class="copy-button"
+                    @click="copyToClipboard(value)"
                   ></el-button>
                 </div>
               </div>
@@ -320,25 +326,6 @@ const copyToClipboard = async (text: string) => {
   justify-content: center;
 }
 
-.file-extensions {
-  margin-top: 16px;
-}
-
-.extension-input {
-  max-width: 400px;
-  margin-bottom: 12px;
-}
-
-.extension-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.extension-tag {
-  margin-right: 8px;
-}
 
 .operation-section {
   flex: 1;
@@ -366,16 +353,6 @@ const copyToClipboard = async (text: string) => {
   display: flex;
 }
 
-.upload-area.is-processing {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.file-uploader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
 
 .directory-path-container {
   display: flex;
@@ -398,8 +375,21 @@ const copyToClipboard = async (text: string) => {
   overflow: hidden;
 }
 
-.results-section h3 {
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
   flex-shrink: 0;
+}
+
+.results-header h3 {
+  margin: 0;
+}
+
+.file-count {
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
 }
 
 .el-table {

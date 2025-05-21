@@ -6,6 +6,9 @@ const api = {
   calculateHash: (filePath: string, algorithms: string[]) => {
     return ipcRenderer.invoke('calculate-file-hash', filePath, algorithms)
   },
+  calculateBatchHashes: (filePaths: string[], algorithms: string[]) => {
+    return ipcRenderer.invoke('calculate-batch-hashes', filePaths, algorithms)
+  },
   scanDirectory: (dirPath: string) => {
     return ipcRenderer.invoke('scan-directory', dirPath)
   },

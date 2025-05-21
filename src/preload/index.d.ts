@@ -8,6 +8,17 @@ interface HashResult {
   fileName?: string
 }
 
+interface BatchHashResult {
+  success: boolean
+  results?: Array<{
+    filePath: string
+    success: boolean
+    results?: Record<string, string>
+    error?: any
+  }>
+  error?: string
+}
+
 interface ScanResult {
   success: boolean
   files?: string[]
@@ -16,6 +27,7 @@ interface ScanResult {
 
 interface API {
   calculateHash: (filePath: string, algorithms: string[]) => Promise<HashResult>
+  calculateBatchHashes: (filePaths: string[], algorithms: string[]) => Promise<BatchHashResult>
   scanDirectory: (dirPath: string) => Promise<ScanResult>
   selectDirectory: () => Promise<string | undefined>
   uploadAndCalculateHash: (algorithms: string[]) => Promise<HashResult>

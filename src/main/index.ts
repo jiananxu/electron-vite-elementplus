@@ -3,8 +3,13 @@ import { join } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { readdir } from 'fs/promises'
-import { readFileSync } from 'fs'
+import { readFileSync, createReadStream } from 'fs'
 import { createHash } from 'crypto'
+import { cpus } from 'os'
+import { pipeline } from 'stream/promises'
+
+// 缓存已计算的哈希值
+const hashCache = new Map<string, Record<string, string>>()
 
 // 工具函数：将算法名称转换为 Node.js crypto 模块支持的格式
 function getHashType(algorithm: string): string {
@@ -23,27 +28,51 @@ function getHashType(algorithm: string): string {
 }
 
 // 工具函数：计算文件的哈希值
-function calculateFileHashes(filePath: string, algorithms: string[]): Record<string, string> {
-  const results: Record<string, string> = {}
-  const fileBuffer = readFileSync(filePath)
+async function calculateFileHashes(filePath: string, algorithms: string[]): Promise<Record<string, string>> {
+  // 生成缓存键
+  const cacheKey = `${filePath}:${algorithms.sort().join(',')}`
 
-  for (const algorithm of algorithms) {
-    const hashType = getHashType(algorithm)
-    const hash = createHash(hashType).update(fileBuffer).digest('hex')
-    results[algorithm] = hash
+  // 检查缓存
+  if (hashCache.has(cacheKey)) {
+    return hashCache.get(cacheKey)!
+  }
+
+  const results: Record<string, string> = {}
+  const hashes = algorithms.map(algo => ({
+    type: algo,
+    hash: createHash(getHashType(algo))
+  }))
+
+  // 使用流式处理
+  const fileStream = createReadStream(filePath, { highWaterMark: 1024 * 1024 * 500 }) // 500MB chunks
+
+  // 使用pipeline处理流
+  await pipeline(
+    fileStream,
+    async function* (source) {
+      for await (const chunk of source) {
+        // 对每个chunk同时更新所有hash
+        hashes.forEach(({ hash }) => hash.update(chunk))
+        yield chunk
+      }
+    }
+  )
+
+  // 计算最终的哈希值
+  hashes.forEach(({ type, hash }) => {
+    results[type] = hash.digest('hex')
+  })
+
+  // 存入缓存
+  hashCache.set(cacheKey, results)
+
+  // 缓存大小控制
+  if (hashCache.size > 1000) {
+    const firstKey = hashCache.keys().next().value
+    hashCache.delete(firstKey)
   }
 
   return results
-}
-
-// 工具函数：包装错误处理
-function wrapWithErrorHandling<T>(fn: () => T): { success: boolean; results?: T; error?: any } {
-  try {
-    const results = fn()
-    return { success: true, results }
-  } catch (error) {
-    return { success: false, error }
-  }
 }
 
 function createWindow(): void {
@@ -94,10 +123,40 @@ app.whenReady().then(() => {
 
   // 处理文件哈希计算
   ipcMain.handle('calculate-file-hash', async (_, filePath, algorithms) => {
-    return wrapWithErrorHandling(() => {
-      const results = calculateFileHashes(filePath, algorithms)
-      return results
-    })
+    try {
+      const results = await calculateFileHashes(filePath, algorithms)
+      return { success: true, results }
+    } catch (error) {
+      return { success: false, error }
+    }
+  })
+
+  // 批量处理文件哈希计算
+  ipcMain.handle('calculate-batch-hashes', async (_, filePaths, algorithms) => {
+    try {
+      const batchSize = Math.max(1, Math.min(cpus().length * 2, 8)) // 根据CPU核心数确定批量大小，最大8个
+      const results = []
+
+      // 分批处理文件
+      for (let i = 0; i < filePaths.length; i += batchSize) {
+        const batch = filePaths.slice(i, i + batchSize)
+        const batchPromises = batch.map(async (filePath) => {
+          try {
+            const hashResults = await calculateFileHashes(filePath, algorithms)
+            return { filePath, success: true, results: hashResults }
+          } catch (error) {
+            return { filePath, success: false, error }
+          }
+        })
+
+        const batchResults = await Promise.all(batchPromises)
+        results.push(...batchResults)
+      }
+
+      return { success: true, results }
+    } catch (error) {
+      return { success: false, error }
+    }
   })
 
   // 处理目录扫描
@@ -152,7 +211,7 @@ app.whenReady().then(() => {
       }
 
       const filePath = result.filePaths[0]
-      const results = calculateFileHashes(filePath, algorithms)
+      const results = await calculateFileHashes(filePath, algorithms)
 
       return {
         success: true,
@@ -185,7 +244,7 @@ app.whenReady().then(() => {
       }
 
       const filePath = result.filePaths[0]
-      const results = calculateFileHashes(filePath, algorithms)
+      const results = await calculateFileHashes(filePath, algorithms)
 
       return {
         success: true,
