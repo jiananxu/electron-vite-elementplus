@@ -6,6 +6,46 @@ import { readdir } from 'fs/promises'
 import { readFileSync } from 'fs'
 import { createHash } from 'crypto'
 
+// 工具函数：将算法名称转换为 Node.js crypto 模块支持的格式
+function getHashType(algorithm: string): string {
+  switch (algorithm.toUpperCase()) {
+    case 'SHA1':
+      return 'sha1'
+    case 'SHA256':
+      return 'sha256'
+    case 'SHA512':
+      return 'sha512'
+    case 'MD5':
+      return 'md5'
+    default:
+      throw new Error(`Unsupported hash algorithm: ${algorithm}`)
+  }
+}
+
+// 工具函数：计算文件的哈希值
+function calculateFileHashes(filePath: string, algorithms: string[]): Record<string, string> {
+  const results: Record<string, string> = {}
+  const fileBuffer = readFileSync(filePath)
+
+  for (const algorithm of algorithms) {
+    const hashType = getHashType(algorithm)
+    const hash = createHash(hashType).update(fileBuffer).digest('hex')
+    results[algorithm] = hash
+  }
+
+  return results
+}
+
+// 工具函数：包装错误处理
+function wrapWithErrorHandling<T>(fn: () => T): { success: boolean; results?: T; error?: any } {
+  try {
+    const results = fn()
+    return { success: true, results }
+  } catch (error) {
+    return { success: false, error }
+  }
+}
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -54,47 +94,10 @@ app.whenReady().then(() => {
 
   // 处理文件哈希计算
   ipcMain.handle('calculate-file-hash', async (_, filePath, algorithms) => {
-    try {
-      const results = {}
-
-      // 使用 Node.js 的原生 crypto 模块计算哈希
-      for (const algorithm of algorithms) {
-        let hashType: string
-
-        // 将算法名称转换为 Node.js crypto 模块支持的格式
-        switch (algorithm.toUpperCase()) {
-          case 'SHA1':
-            hashType = 'sha1'
-            break
-          case 'SHA256':
-            hashType = 'sha256'
-            break
-          case 'SHA512':
-            hashType = 'sha512'
-            break
-          case 'MD5':
-            hashType = 'md5'
-            break
-          default:
-            throw new Error(`Unsupported hash algorithm: ${algorithm}`)
-        }
-
-        // 使用同步方法读取文件并计算哈希
-        const fileBuffer = readFileSync(filePath)
-        const hash = createHash(hashType).update(fileBuffer).digest('hex')
-        results[algorithm] = hash
-      }
-
-      return {
-        success: true,
-        results
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error
-      }
-    }
+    return wrapWithErrorHandling(() => {
+      const results = calculateFileHashes(filePath, algorithms)
+      return results
+    })
   })
 
   // 处理目录扫描
@@ -149,35 +152,7 @@ app.whenReady().then(() => {
       }
 
       const filePath = result.filePaths[0]
-      const results = {}
-
-      // 使用 Node.js 的原生 crypto 模块计算哈希
-      for (const algorithm of algorithms) {
-        let hashType: string
-
-        // 将算法名称转换为 Node.js crypto 模块支持的格式
-        switch (algorithm.toUpperCase()) {
-          case 'SHA1':
-            hashType = 'sha1'
-            break
-          case 'SHA256':
-            hashType = 'sha256'
-            break
-          case 'SHA512':
-            hashType = 'sha512'
-            break
-          case 'MD5':
-            hashType = 'md5'
-            break
-          default:
-            throw new Error(`Unsupported hash algorithm: ${algorithm}`)
-        }
-
-        // 读取文件并计算哈希
-        const fileBuffer = readFileSync(filePath)
-        const hash = createHash(hashType).update(fileBuffer).digest('hex')
-        results[algorithm] = hash
-      }
+      const results = calculateFileHashes(filePath, algorithms)
 
       return {
         success: true,
@@ -196,10 +171,6 @@ app.whenReady().then(() => {
   // 处理从拖拽文件计算哈希
   ipcMain.handle('calculate-hash-from-file', async (_, file, algorithms) => {
     try {
-      // 由于 Electron 的安全限制，我们不能直接从渲染进程访问拖拽文件的路径
-      // 这里我们需要通过临时文件或其他方式处理
-      // 在这个实现中，我们将使用渲染进程提供的文件名，并通过文件选择对话框让用户选择实际文件
-
       const result = await dialog.showOpenDialog({
         properties: ['openFile'],
         title: `请选择拖拽的文件: ${file.name}`,
@@ -214,35 +185,7 @@ app.whenReady().then(() => {
       }
 
       const filePath = result.filePaths[0]
-      const results = {}
-
-      // 使用 Node.js 的原生 crypto 模块计算哈希
-      for (const algorithm of algorithms) {
-        let hashType: string
-
-        // 将算法名称转换为 Node.js crypto 模块支持的格式
-        switch (algorithm.toUpperCase()) {
-          case 'SHA1':
-            hashType = 'sha1'
-            break
-          case 'SHA256':
-            hashType = 'sha256'
-            break
-          case 'SHA512':
-            hashType = 'sha512'
-            break
-          case 'MD5':
-            hashType = 'md5'
-            break
-          default:
-            throw new Error(`Unsupported hash algorithm: ${algorithm}`)
-        }
-
-        // 读取文件并计算哈希
-        const fileBuffer = readFileSync(filePath)
-        const hash = createHash(hashType).update(fileBuffer).digest('hex')
-        results[algorithm] = hash
-      }
+      const results = calculateFileHashes(filePath, algorithms)
 
       return {
         success: true,

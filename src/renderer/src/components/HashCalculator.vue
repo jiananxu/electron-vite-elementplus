@@ -21,7 +21,9 @@ const hashTypes = reactive({
 // 不再需要文件扩展名过滤
 const results = ref<HashResult[]>([])
 const directoryPath = ref('')
-const isProcessing = ref(false)
+// 为每个按钮创建独立的 loading 状态
+const isFileProcessing = ref(false)
+const isDirectoryProcessing = ref(false)
 
 // 创建选中类型的数组，用于 checkbox-group
 const selectedTypes = ref<string[]>(['SHA256']) // 默认选中 SHA256
@@ -63,7 +65,7 @@ const handleFileChange = async () => {
     return
   }
 
-  isProcessing.value = true
+  isFileProcessing.value = true
   results.value = [] // 清除之前的结果
 
   try {
@@ -76,7 +78,6 @@ const handleFileChange = async () => {
         hash: hashResult.results!
       }
       results.value = [result] // 只保留最新的结果
-      ElMessage.success(`成功计算 ${hashResult.fileName} 的哈希值`)
     } else {
       if (hashResult.error !== 'File selection canceled') {
         ElMessage.error(`计算哈希失败: ${hashResult.error}`)
@@ -85,7 +86,7 @@ const handleFileChange = async () => {
   } catch (error: any) {
     ElMessage.error(`发生错误: ${error.message}`)
   } finally {
-    isProcessing.value = false
+    isFileProcessing.value = false
   }
 }
 
@@ -103,7 +104,7 @@ const handleDrop = async (e: DragEvent) => {
     return
   }
 
-  isProcessing.value = true
+  isFileProcessing.value = true
 
   try {
     // 由于 Electron 的安全限制，我们使用 uploadAndCalculateHash API
@@ -127,7 +128,7 @@ const handleDrop = async (e: DragEvent) => {
     const errorMessage = error instanceof Error ? error.message : String(error)
     ElMessage.error(`处理文件时发生错误: ${errorMessage}`)
   } finally {
-    isProcessing.value = false
+    isFileProcessing.value = false
   }
 }
 
@@ -138,7 +139,7 @@ const handleDragOver = (e: DragEvent) => {
 
 // 处理目录选择
 const handleDirectorySelect = async () => {
-  isProcessing.value = true
+  isDirectoryProcessing.value = true
 
   try {
     // 检查是否选择了至少一种哈希算法
@@ -199,7 +200,7 @@ const handleDirectorySelect = async () => {
     const errorMessage = error instanceof Error ? error.message : String(error)
     ElMessage.error(`选择目录时发生错误: ${errorMessage || '未知错误'}`)
   } finally {
-    isProcessing.value = false
+    isDirectoryProcessing.value = false
   }
 }
 
@@ -240,7 +241,7 @@ const copyToClipboard = async (text: string) => {
           <div class="button-container">
             <el-button
               type="primary"
-              :loading="isProcessing"
+              :loading="isFileProcessing"
               :icon="Upload"
               @click="handleFileChange"
             >
@@ -249,7 +250,10 @@ const copyToClipboard = async (text: string) => {
           </div>
 
           <div class="button-container">
-            <el-button type="primary" @click="handleDirectorySelect" :loading="isProcessing"
+            <el-button
+              type="primary"
+              @click="handleDirectorySelect"
+              :loading="isDirectoryProcessing"
               >选择目录计算哈希值
             </el-button>
           </div>
