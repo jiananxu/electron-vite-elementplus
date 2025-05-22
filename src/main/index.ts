@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { readdir } from 'fs/promises'
-import { readFileSync, createReadStream } from 'fs'
+import { createReadStream } from 'fs'
 import { createHash } from 'crypto'
 import { cpus } from 'os'
 import { pipeline } from 'stream/promises'
@@ -68,7 +68,7 @@ async function calculateFileHashes(filePath: string, algorithms: string[]): Prom
 
   // 缓存大小控制
   if (hashCache.size > 1000) {
-    const firstKey = hashCache.keys().next().value
+    const firstKey: any = hashCache.keys().next().value
     hashCache.delete(firstKey)
   }
 
@@ -135,7 +135,7 @@ app.whenReady().then(() => {
   ipcMain.handle('calculate-batch-hashes', async (_, filePaths, algorithms) => {
     try {
       const batchSize = Math.max(1, Math.min(cpus().length * 2, 8)) // 根据CPU核心数确定批量大小，最大8个
-      const results = []
+      const results: any = []
 
       // 分批处理文件
       for (let i = 0; i < filePaths.length; i += batchSize) {
