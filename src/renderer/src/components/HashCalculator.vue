@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { CopyDocument, Upload } from '@element-plus/icons-vue'
+import { CopyDocument, Upload, Finished } from '@element-plus/icons-vue'
 
 interface HashResult {
   filename: string
@@ -207,7 +207,71 @@ const handleDirectorySelect = async () => {
   }
 }
 
+// 重命名文件
+const renameFile = async (filePath: string, algorithm: string, hash: string) => {
+  try {
+    const lastSlashIndex = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'))
+    const originalFilename = filePath.substring(lastSlashIndex + 1)
+    const newFilename = replaceHashInFilename(originalFilename, algorithm, hash)
+
+    const result = await window.api.renameFile(filePath, newFilename)
+
+    if (result.success) {
+      // 更新结果列表中的文件路径
+      const updatedResults = results.value.map(item => {
+        if (item.path === filePath) {
+          return {
+            ...item,
+            path: result.newPath,
+            filename: newFilename
+          }
+        }
+        return item
+      })
+      results.value = updatedResults
+      ElMessage.success('文件重命名成功')
+    } else {
+      ElMessage.error(`重命名失败: ${result.error}`)
+    }
+  } catch (error) {
+    console.error('重命名文件时发生错误:', error)
+    ElMessage.error('重命名文件失败')
+  }
+}
+
 // 复制哈希值到剪贴板
+// 替换文件名中的哈希值
+const replaceHashInFilename = (filename: string, algorithm: string, newHash: string) => {
+  // 匹配文件名中的算法标记和哈希值
+  const regex = new RegExp(`\\((${Object.keys(hashTypes).join('|')})\\)[a-fA-F0-9]+\\.`)
+
+  if (regex.test(filename)) {
+    // 如果找到了现有的哈希值，替换它
+    return filename.replace(regex, `(${algorithm})${newHash}.`)
+  } else {
+    // 如果没有找到现有的哈希值，在扩展名前添加
+    const lastDotIndex = filename.lastIndexOf('.')
+    if (lastDotIndex === -1) {
+      // 没有扩展名
+      return `${filename}_(${algorithm})${newHash}`
+    }
+    // 有扩展名
+    return `${filename.substring(0, lastDotIndex)}_(${algorithm})${newHash}${filename.substring(lastDotIndex)}`
+  }
+}
+
+// 复制新文件名到剪贴板
+const copyNewFilename = async (filename: string, algorithm: string, hash: string) => {
+  try {
+    const newFilename = replaceHashInFilename(filename, algorithm, hash)
+    await navigator.clipboard.writeText(newFilename)
+    ElMessage.success('新文件名已复制到剪贴板')
+  } catch (err) {
+    ElMessage.error('复制失败')
+    console.error('复制失败:', err)
+  }
+}
+
 const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text)
@@ -230,7 +294,7 @@ const copyToClipboard = async (text: string) => {
       <div class="hash-types">
         <el-space wrap>
           <el-checkbox-group v-model="selectedTypes">
-            <el-checkbox-button v-for="(_, type) in hashTypes" :key="type" :label="type">
+            <el-checkbox-button v-for="(_, type) in hashTypes" :key="type" :value="type">
               {{ type }}
             </el-checkbox-button>
           </el-checkbox-group>
@@ -281,15 +345,28 @@ const copyToClipboard = async (text: string) => {
                 <div class="hash-value-container">
                   <strong>{{ type }}:</strong>
                   <span class="hash-value">{{ value }}</span>
-                  <el-button
-                    v-if="value !== '计算中...' && value !== '计算失败'"
-                    type="primary"
-                    size="small"
-                    :icon="CopyDocument"
-                    circle
-                    class="copy-button"
-                    @click="copyToClipboard(value)"
-                  ></el-button>
+                  <div class="button-group">
+                    <el-button
+                      v-if="value !== '计算中...' && value !== '计算失败'"
+                      type="primary"
+                      size="small"
+                      :icon="CopyDocument"
+                      circle
+                      class="action-button"
+                      :title="'复制哈希值到剪贴板'"
+                      @click="copyToClipboard(value)"
+                    />
+                    <el-button
+                      v-if="value !== '计算中...' && value !== '计算失败'"
+                      type="success"
+                      size="small"
+                      :icon="Finished"
+                      circle
+                      class="action-button"
+                      :title="'将哈希值替换到文件名中'"
+                      @click="renameFile(row.path, type, value)"
+                    />
+                  </div>
                 </div>
               </div>
             </template>
@@ -417,7 +494,13 @@ const copyToClipboard = async (text: string) => {
   flex: 1;
 }
 
-.copy-button {
+.button-group {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.action-button {
   flex-shrink: 0;
 }
 

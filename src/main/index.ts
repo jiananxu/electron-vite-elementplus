@@ -1,9 +1,9 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
-import { join } from 'path'
+import { join, dirname } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { readdir } from 'fs/promises'
-import { createReadStream } from 'fs'
+import { readdir, rename } from 'fs/promises'
+import { createReadStream, existsSync } from 'fs'
 import { createHash } from 'crypto'
 import { cpus } from 'os'
 import { pipeline } from 'stream/promises'
@@ -223,6 +223,47 @@ app.whenReady().then(() => {
       return {
         success: false,
         error: error
+      }
+    }
+  })
+
+  // 处理文件重命名
+  ipcMain.handle('rename-file', async (_, oldPath, newName) => {
+    try {
+      // 确保文件存在
+      if (!existsSync(oldPath)) {
+        return {
+          success: false,
+          error: 'File does not exist'
+        }
+      }
+
+      // 获取文件所在目录
+      const directory = dirname(oldPath)
+
+      // 创建新文件的完整路径
+      const newPath = join(directory, newName)
+
+      // 检查新文件名是否已存在
+      if (existsSync(newPath)) {
+        return {
+          success: false,
+          error: 'A file with this name already exists'
+        }
+      }
+
+      // 执行重命名操作
+      await rename(oldPath, newPath)
+
+      return {
+        success: true,
+        newPath
+      }
+    } catch (error) {
+      console.error('重命名文件出错:', error)
+      return {
+        success: false,
+        error: error || 'Failed to rename file'
       }
     }
   })

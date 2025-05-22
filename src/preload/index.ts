@@ -20,6 +20,9 @@ const api = {
   },
   calculateHashFromFile: (file: File, algorithms: string[]) => {
     return ipcRenderer.invoke('calculate-hash-from-file', file, algorithms)
+  },
+  renameFile: (oldPath: string, newName: string) => {
+    return ipcRenderer.invoke('rename-file', oldPath, newName)
   }
 }
 

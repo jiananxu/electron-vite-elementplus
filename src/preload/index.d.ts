@@ -32,6 +32,7 @@ interface API {
   selectDirectory: () => Promise<string | undefined>
   uploadAndCalculateHash: (algorithms: string[]) => Promise<HashResult>
   calculateHashFromFile: (file: File, algorithms: string[]) => Promise<HashResult>
+  renameFile: (oldPath: string, newName: string) => Promise<{success: boolean; error?: string; newPath?: string}>
 }
 
 declare global {
