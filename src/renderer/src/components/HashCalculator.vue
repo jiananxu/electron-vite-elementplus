@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch,onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { CopyDocument, Upload, Finished } from '@element-plus/icons-vue'
 
@@ -208,7 +208,7 @@ const handleDirectorySelect = async () => {
 }
 
 // 重命名文件
-const renameFile = async (filePath: string, algorithm: string, hash: string) => {
+const renameFile = async (filePath: string, algorithm: any, hash: string) => {
   try {
     const lastSlashIndex = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'))
     const originalFilename = filePath.substring(lastSlashIndex + 1)
@@ -218,7 +218,7 @@ const renameFile = async (filePath: string, algorithm: string, hash: string) => 
 
     if (result.success) {
       // 更新结果列表中的文件路径
-      const updatedResults = results.value.map(item => {
+      const updatedResults: any = results.value.map((item) => {
         if (item.path === filePath) {
           return {
             ...item,
@@ -257,18 +257,6 @@ const replaceHashInFilename = (filename: string, algorithm: string, newHash: str
     }
     // 有扩展名
     return `${filename.substring(0, lastDotIndex)}_(${algorithm})${newHash}${filename.substring(lastDotIndex)}`
-  }
-}
-
-// 复制新文件名到剪贴板
-const copyNewFilename = async (filename: string, algorithm: string, hash: string) => {
-  try {
-    const newFilename = replaceHashInFilename(filename, algorithm, hash)
-    await navigator.clipboard.writeText(newFilename)
-    ElMessage.success('新文件名已复制到剪贴板')
-  } catch (err) {
-    ElMessage.error('复制失败')
-    console.error('复制失败:', err)
   }
 }
 

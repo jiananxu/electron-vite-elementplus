@@ -268,39 +268,6 @@ app.whenReady().then(() => {
     }
   })
 
-  // 处理从拖拽文件计算哈希
-  ipcMain.handle('calculate-hash-from-file', async (_, file, algorithms) => {
-    try {
-      const result = await dialog.showOpenDialog({
-        properties: ['openFile'],
-        title: `请选择拖拽的文件: ${file.name}`,
-        buttonLabel: '选择此文件'
-      })
-
-      if (result.canceled || result.filePaths.length === 0) {
-        return {
-          success: false,
-          error: 'File selection canceled'
-        }
-      }
-
-      const filePath = result.filePaths[0]
-      const results = await calculateFileHashes(filePath, algorithms)
-
-      return {
-        success: true,
-        filePath,
-        fileName: filePath.split(/[/\\]/).pop(),
-        results
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error
-      }
-    }
-  })
-
   createWindow()
 
   app.on('activate', function () {
