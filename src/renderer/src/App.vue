@@ -2,8 +2,12 @@
 import { ref } from 'vue'
 import { Operation } from '@element-plus/icons-vue'
 import HashCalculator from './components/HashCalculator.vue'
+import Version from './components/Versions.vue'
 
 const activeMenu = ref('hash-calculator')
+const handleSelect = (key: string) => {
+  activeMenu.value = key
+}
 </script>
 
 <template>
@@ -14,16 +18,22 @@ const activeMenu = ref('hash-calculator')
       class="el-menu-demo"
       mode="horizontal"
       :ellipsis="false"
+      @select="handleSelect"
     >
       <el-menu-item index="hash-calculator">
         <el-icon><Operation /></el-icon>
         <span>哈希计算</span>
+      </el-menu-item>
+      <el-menu-item index="about" @click="activeMenu = 'about'">
+        <el-icon><InfoFilled /></el-icon>
+        <span>关于</span>
       </el-menu-item>
     </el-menu>
 
     <!-- 内容区域 -->
     <div class="content-area">
       <HashCalculator v-if="activeMenu === 'hash-calculator'" />
+      <Version v-else-if="activeMenu === 'about'" />
     </div>
   </div>
 </template>
