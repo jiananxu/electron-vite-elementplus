@@ -268,6 +268,15 @@ app.whenReady().then(() => {
     }
   })
 
+  // 处理打开外部URL的请求
+  ipcMain.on('open-external-url', async (_, url) => {
+    try {
+      await shell.openExternal(url)
+    } catch (error) {
+      console.error('打开外部URL失败:', error)
+    }
+  })
+
   createWindow()
 
   app.on('activate', function () {

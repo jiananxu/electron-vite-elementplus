@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Operation } from '@element-plus/icons-vue'
+import { Operation, Calendar, Link, InfoFilled } from '@element-plus/icons-vue'
 import HashCalculator from './components/HashCalculator.vue'
 import Version from './components/Versions.vue'
+import TodoList from './components/TodoList.vue'
+import CommonWebsites from './components/CommonWebsites.vue'
 
 const activeMenu = ref('hash-calculator')
 const handleSelect = (key: string) => {
@@ -24,7 +26,15 @@ const handleSelect = (key: string) => {
         <el-icon><Operation /></el-icon>
         <span>哈希计算</span>
       </el-menu-item>
-      <el-menu-item index="about" @click="activeMenu = 'about'">
+      <el-menu-item index="todo-list">
+        <el-icon><Calendar /></el-icon>
+        <span>待办列表</span>
+      </el-menu-item>
+      <el-menu-item index="common-websites">
+        <el-icon><Link /></el-icon>
+        <span>常用网站</span>
+      </el-menu-item>
+      <el-menu-item index="about">
         <el-icon><InfoFilled /></el-icon>
         <span>关于</span>
       </el-menu-item>
@@ -33,6 +43,8 @@ const handleSelect = (key: string) => {
     <!-- 内容区域 -->
     <div class="content-area">
       <HashCalculator v-if="activeMenu === 'hash-calculator'" />
+      <TodoList v-else-if="activeMenu === 'todo-list'" />
+      <CommonWebsites v-else-if="activeMenu === 'common-websites'" />
       <Version v-else-if="activeMenu === 'about'" />
     </div>
   </div>

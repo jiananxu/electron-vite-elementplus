@@ -23,6 +23,9 @@ const api = {
   },
   renameFile: (oldPath: string, newName: string) => {
     return ipcRenderer.invoke('rename-file', oldPath, newName)
+  },
+  openExternalUrl: (url: string) => {
+    ipcRenderer.send('open-external-url', url)
   }
 }
 
