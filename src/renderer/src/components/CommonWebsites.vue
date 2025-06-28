@@ -10,7 +10,17 @@
         <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="site in websites" :key="site.name">
           <el-card class="website-card" shadow="hover" @click="visitWebsite(site.url)">
             <div class="website-icon">
-              <el-icon :size="24"><component :is="site.icon" /></el-icon>
+              <el-icon :size="24">
+                <el-icon-link v-if="site.icon === 'Link'" />
+                <el-icon-search v-else-if="site.icon === 'Search'" />
+                <el-icon-video-play v-else-if="site.icon === 'VideoPlay'" />
+                <el-icon-reading v-else-if="site.icon === 'Reading'" />
+                <el-icon-document v-else-if="site.icon === 'Document'" />
+                <el-icon-collection v-else-if="site.icon === 'Collection'" />
+                <el-icon-promotion v-else-if="site.icon === 'Promotion'" />
+                <el-icon-notebook v-else-if="site.icon === 'Notebook'" />
+                <el-icon-link v-else />
+              </el-icon>
             </div>
             <div class="website-info">
               <h3>{{ site.name }}</h3>
@@ -47,16 +57,17 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, FormInstance } from 'element-plus'
 import {
-  Link,
-  Search,
-  VideoPlay,
-  Reading,
-  Document,
-  Collection,
-  Promotion,
-  Notebook
+  Link as ElIconLink,
+  Search as ElIconSearch,
+  VideoPlay as ElIconVideoPlay,
+  Reading as ElIconReading,
+  Document as ElIconDocument,
+  Collection as ElIconCollection,
+  Promotion as ElIconPromotion,
+  Notebook as ElIconNotebook
 } from '@element-plus/icons-vue'
 
+// 定义类型
 interface Website {
   name: string
   url: string
@@ -104,16 +115,47 @@ const websites = ref<Website[]>([
   }
 ])
 
+// 新网站表单接口
+interface NewWebsiteForm {
+  name: string
+  url: string
+  description: string
+  icon: string
+}
+
 // 新网站表单
-const newWebsite = reactive({
+const newWebsite = reactive<NewWebsiteForm>({
   name: '',
   url: '',
   description: '',
   icon: 'Link'
 })
 
+// 表单验证规则类型
+type FormRules = {
+  name: Array<{
+    required?: boolean
+    message: string
+    trigger: 'blur'
+    min?: number
+    max?: number
+  }>
+  url: Array<{
+    required?: boolean
+    message: string
+    trigger: 'blur'
+    pattern?: RegExp
+  }>
+  description: Array<{
+    required?: boolean
+    message: string
+    trigger: 'blur'
+    max?: number
+  }>
+}
+
 // 表单验证规则
-const rules = {
+const rules: FormRules = {
   name: [
     { required: true, message: '请输入网站名称', trigger: 'blur' },
     { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
@@ -161,8 +203,14 @@ const addWebsite = async () => {
 }
 
 // 访问网站
-const visitWebsite = (url: string) => {
-  window.api.openExternalUrl(url)
+const visitWebsite = (url: string): void => {
+  // 确保 window.api 存在
+  if (window.api && typeof window.api.openExternalUrl === 'function') {
+    window.api.openExternalUrl(url)
+  } else {
+    // 降级处理：如果 API 不可用，尝试使用标准方法打开
+    window.open(url, '_blank')
+  }
 }
 </script>
 

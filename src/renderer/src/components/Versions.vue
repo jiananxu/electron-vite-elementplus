@@ -10,7 +10,20 @@
 
 <script setup lang="ts">
 import { reactive } from 'vue'
-const versions = reactive({ ...window.electron.process.versions })
+
+// 默认版本信息
+const defaultVersions = {
+  electron: '未知',
+  chrome: '未知',
+  node: '未知'
+}
+
+// 检查 window.electron 是否可用
+const versions = reactive(
+  window.electron && window.electron.process && window.electron.process.versions
+    ? { ...window.electron.process.versions }
+    : { ...defaultVersions }
+)
 </script>
 
 <style scoped>

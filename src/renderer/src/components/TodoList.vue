@@ -117,6 +117,9 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
+// 定义类型
+type FilterType = 'all' | 'active' | 'completed'
+
 interface Task {
   id: number
   title: string
@@ -126,11 +129,11 @@ interface Task {
 
 // 任务列表
 const tasks = ref<Task[]>([])
-const newTask = ref('')
-const filter = ref('all')
+const newTask = ref<string>('')
+const filter = ref<FilterType>('all')
 const editingTaskId = ref<number | null>(null)
-const editingTaskText = ref('')
-const datePickerVisible = ref(false)
+const editingTaskText = ref<string>('')
+const datePickerVisible = ref<boolean>(false)
 const selectedDate = ref<Date | null>(null)
 const currentTaskForDate = ref<Task | null>(null)
 const editInput = ref<HTMLInputElement | null>(null)

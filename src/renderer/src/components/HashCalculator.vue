@@ -65,6 +65,12 @@ const handleFileChange = async () => {
     return
   }
 
+  // 检查 API 是否可用
+  if (!window.api || typeof window.api.uploadAndCalculateHash !== 'function') {
+    ElMessage.error('API 不可用，无法计算哈希值')
+    return
+  }
+
   isFileProcessing.value = true
   results.value = [] // 清除之前的结果
 
@@ -104,6 +110,12 @@ const handleDrop = async (e: DragEvent) => {
     return
   }
 
+  // 检查 API 是否可用
+  if (!window.api || typeof window.api.uploadAndCalculateHash !== 'function') {
+    ElMessage.error('API 不可用，无法计算哈希值')
+    return
+  }
+
   isFileProcessing.value = true
 
   try {
@@ -139,15 +151,24 @@ const handleDragOver = (e: DragEvent) => {
 
 // 处理目录选择
 const handleDirectorySelect = async () => {
+  // 检查是否选择了至少一种哈希算法
+  if (selectedAlgorithms.value.length === 0) {
+    ElMessage.warning('请至少选择一种哈希算法')
+    return
+  }
+
+  // 检查 API 是否可用
+  if (!window.api ||
+      typeof window.api.selectDirectory !== 'function' ||
+      typeof window.api.scanDirectory !== 'function' ||
+      typeof window.api.calculateBatchHashes !== 'function') {
+    ElMessage.error('API 不可用，无法处理目录')
+    return
+  }
+
   isDirectoryProcessing.value = true
 
   try {
-    // 检查是否选择了至少一种哈希算法
-    if (selectedAlgorithms.value.length === 0) {
-      ElMessage.warning('请至少选择一种哈希算法')
-      return
-    }
-
     // 选择目录
     const dirPath = await window.api.selectDirectory()
 
@@ -209,6 +230,12 @@ const handleDirectorySelect = async () => {
 
 // 重命名文件
 const renameFile = async (filePath: string, algorithm: any, hash: string) => {
+  // 检查 API 是否可用
+  if (!window.api || typeof window.api.renameFile !== 'function') {
+    ElMessage.error('API 不可用，无法重命名文件')
+    return
+  }
+
   try {
     const lastSlashIndex = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'))
     const originalFilename = filePath.substring(lastSlashIndex + 1)

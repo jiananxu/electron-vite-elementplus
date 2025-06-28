@@ -33,6 +33,7 @@ interface API {
   uploadAndCalculateHash: (algorithms: string[]) => Promise<HashResult>
   calculateHashFromFile: (file: File, algorithms: string[]) => Promise<HashResult>
   renameFile: (oldPath: string, newName: string) => Promise<{success: boolean; error?: string; newPath?: string}>
+  openExternalUrl: (url: string) => void
 }
 
 declare global {
